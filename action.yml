@@ -30,7 +30,12 @@ runs:
     - name: Deploy jumpstarter controller
       shell: bash
       run: |
+        cp values.kind.yaml ./controller/deploy/helm/jumpstarter/values.kind.yaml
         make -C controller deploy
+    - name: Deploy dex
+      shell: bash
+      run: |
+        kubectl apply -f dex.yaml
     - name: Install jumpstarter
       shell: bash
       run: |
