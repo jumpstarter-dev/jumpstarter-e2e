@@ -36,7 +36,10 @@ runs:
     - name: Deploy dex
       shell: bash
       run: |
+        kubectl create namespace dex
         kubectl apply -f dex.yaml
+        helm repo add dex https://charts.dexidp.io
+        helm install --namespace dex --generate-name --wait -f dex.values.yaml dex/dex
     - name: Install jumpstarter
       shell: bash
       run: |
