@@ -60,7 +60,7 @@ runs:
         jmp admin create exporter test-exporter-1 --save
         jmp admin create exporter test-exporter-2 --save
 
-        kubectl patch exporters.jumpstarter.dev test-exporter-1 \
+        kubectl -n default patch exporters.jumpstarter.dev test-exporter-1 \
           --type=merge --patch '{"spec":{"username":"dex:test-exporter-1"}}'
 
         EXPORTER_1_TOKEN=$(go run github.com/cloudentity/oauth2c@latest \
