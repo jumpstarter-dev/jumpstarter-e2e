@@ -64,7 +64,7 @@ runs:
           --type=merge --patch '{"spec":{"username":"dex:test-exporter-1"}}'
 
         EXPORTER_1_TOKEN=$(go run github.com/cloudentity/oauth2c@latest \
-          https://127.0.0.1:5556/dex \
+          https://127.0.0.1:5556 \
           --auth-method client_secret_post --grant-type password \
           --client-id jumpstarter --client-secret secret \
           --username test-exporter-1@example.com --password password \
