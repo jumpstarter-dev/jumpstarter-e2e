@@ -1,0 +1,163 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dex
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: dex
+  name: dex
+  namespace: dex
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dex
+  template:
+    metadata:
+      labels:
+        app: dex
+    spec:
+      serviceAccountName: dex
+      containers:
+        - image: ghcr.io/dexidp/dex:v2.41.1
+          name: dex
+          command: ["/usr/local/bin/dex", "serve", "/etc/dex/cfg/config.yaml"]
+          ports:
+            - name: https
+              containerPort: 5556
+          volumeMounts:
+            - name: config
+              mountPath: /etc/dex/cfg
+            - name: tls
+              mountPath: /etc/dex/tls
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 5556
+              scheme: HTTPS
+      volumes:
+        - name: config
+          configMap:
+            name: dex
+            items:
+              - key: config.yaml
+                path: config.yaml
+        - name: tls
+          secret:
+            secretName: dex-tls
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: dex
+  namespace: dex
+data:
+  config.yaml: |
+    issuer: https://dex.dex.svc.cluster.local:5556
+    storage:
+      type: kubernetes
+      config:
+        inCluster: true
+    web:
+      https: 0.0.0.0:5556
+      tlsCert: /etc/dex/tls/tls.crt
+      tlsKey: /etc/dex/tls/tls.key
+
+    staticClients:
+      - id: jumpstarter
+        name: jumpstarter
+        secret: secret
+    oauth2:
+      passwordConnector: local
+    enablePasswordDB: true
+
+    staticPasswords:
+      - email: "client-sample@example.com"
+        hash: "$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W" # password
+        username: "client-sample"
+        userID: "73bca0b9-9be6-4e73-a8fb-347c2ac23255"
+      - email: "exporter-sample@example.com"
+        hash: "$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W" # password
+        username: "exporter-sample"
+        userID: "a4cb4de2-4467-4e5c-a42a-33be8783649d"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dex
+  namespace: dex
+spec:
+  type: NodePort
+  ports:
+    - name: dex
+      port: 5556
+      protocol: TCP
+      targetPort: 5556
+      nodePort: 32000
+  selector:
+    app: dex
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app: dex
+  name: dex
+  namespace: dex
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: dex
+rules:
+  - apiGroups: ["dex.coreos.com"]
+    resources: ["*"]
+    verbs: ["*"]
+  - apiGroups: ["apiextensions.k8s.io"]
+    resources: ["customresourcedefinitions"]
+    verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: dex
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: dex
+subjects:
+  - kind: ServiceAccount
+    name: dex
+    namespace: dex
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: dex-tls
+  namespace: dex
+type: Opaque
+stringData:
+  tls.crt: |
+    -----BEGIN CERTIFICATE-----
+    MIIB/jCCAYWgAwIBAgIIGiIRZdsY1ZswCgYIKoZIzj0EAwMwIDEeMBwGA1UEAxMV
+    bWluaWNhIHJvb3QgY2EgNzI5MGI2MB4XDTI1MDIxMzE5MjQzNloXDTI3MDMxNTE4
+    MjQzNlowJDEiMCAGA1UEAxMZZGV4LmRleC5zdmMuY2x1c3Rlci5sb2NhbDB2MBAG
+    ByqGSM49AgEGBSuBBAAiA2IABOXOUhakYrIsNnmWSrDNk0VAB3HLjlxIvDBKt/As
+    7kEFZyi3Q+6kPwDGZlYS/CLBQz7MleB57xV+BTXeU4C9JJ2VYfUzrzUWMI9U2a+/
+    XAWc1L2GDw6TrLV2COFJQ7njlqOBhzCBhDAOBgNVHQ8BAf8EBAMCBaAwHQYDVR0l
+    BBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMCMAwGA1UdEwEB/wQCMAAwHwYDVR0jBBgw
+    FoAUmUQQlLj97WtsbH451iI74L8+H6IwJAYDVR0RBB0wG4IZZGV4LmRleC5zdmMu
+    Y2x1c3Rlci5sb2NhbDAKBggqhkjOPQQDAwNnADBkAjAr3xJ+MuSx1IsabimAlaIC
+    FvzA7VqtukdJ4ycZ5ndZlC3BOAHw8LEotgYHQpBItjQCMF7x/LkdBThU1nCChoA6
+    r5F8RrqBNPeHeaItjnPpYq6sT3dDqGQF9Rm7bbaG6ExhKA==
+    -----END CERTIFICATE-----
+  tls.key: |
+    -----BEGIN PRIVATE KEY-----
+    MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDDMWWagdOx7Neqeeg2g
+    ofPS9ipeeliiTUv6B/9+oiTMGlTRMPHu4ruSqS7kiw3oBQuhZANiAATlzlIWpGKy
+    LDZ5lkqwzZNFQAdxy45cSLwwSrfwLO5BBWcot0PupD8AxmZWEvwiwUM+zJXgee8V
+    fgU13lOAvSSdlWH1M681FjCPVNmvv1wFnNS9hg8Ok6y1dgjhSUO545Y=
+    -----END PRIVATE KEY-----
