@@ -35,5 +35,8 @@ volumeMounts:
 service:
   type: NodePort
   ports:
+    http:
+      port: 5554
     https:
+      port: 5556
       nodePort: 32000
