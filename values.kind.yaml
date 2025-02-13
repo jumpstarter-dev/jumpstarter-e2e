@@ -31,5 +31,5 @@ jumpstarter-controller:
           -----END CERTIFICATE-----
       claimMappings:
         username:
-          claim: "sub"
+          claim: "name"
           prefix: "dex:"

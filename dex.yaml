@@ -79,9 +79,9 @@ data:
         hash: "$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W" # password
         username: "client-sample"
         userID: "73bca0b9-9be6-4e73-a8fb-347c2ac23255"
-      - email: "exporter-sample@example.com"
+      - email: "test-exporter-1@example.com"
         hash: "$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W" # password
-        username: "exporter-sample"
+        username: "test-exporter-1"
         userID: "a4cb4de2-4467-4e5c-a42a-33be8783649d"
 ---
 apiVersion: v1

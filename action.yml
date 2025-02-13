@@ -31,6 +31,7 @@ runs:
       shell: bash
       run: |
         cp values.kind.yaml ./controller/deploy/helm/jumpstarter/values.kind.yaml
+        cp kind_cluster.yaml ./controller/hack/kind_cluster.yaml
         make -C controller deploy
     - name: Deploy dex
       shell: bash
@@ -58,6 +59,18 @@ runs:
         jmp admin create client   test-client-1   --save --unsafe
         jmp admin create exporter test-exporter-1 --save
         jmp admin create exporter test-exporter-2 --save
+
+        kubectl patch exporters.jumpstarter.dev test-exporter-1 \
+          --type=merge --patch '{"spec":{"username":"dex:test-exporter-1"}}'
+
+        EXPORTER_1_TOKEN=$(go run github.com/cloudentity/oauth2c@latest \
+          https://127.0.0.1:5556/dex \
+          --auth-method client_secret_post --grant-type password \
+          --client-id jumpstarter --client-secret secret \
+          --username test-exporter-1@example.com --password password \
+          --scopes openid,profile --insecure | jq -r .access_token)
+
+        sed -i "s/^token: .*/token: $EXPORTER_1_TOKEN/" /etc/jumpstarter/exporters/test-exporter-1.yaml
 
         cat <<EOF >> /etc/jumpstarter/exporters/test-exporter-1.yaml
         export:
