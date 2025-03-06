@@ -11,4 +11,4 @@ jobs:
       - uses: ./e2e
         with:
           controller-ref: main
-          jumpstarter-ref: token-exchange
+          jumpstarter-ref: summit
