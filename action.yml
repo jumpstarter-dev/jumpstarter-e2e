@@ -107,7 +107,7 @@ runs:
           --issuer https://dex.dex.svc.cluster.local:5556 \
           --username test-exporter-oidc@example.com --password password
 
-        jmp client   login test-exporter-sa \
+        jmp exporter login test-exporter-sa \
           --endpoint "$ENDPOINT" --namespace default --name test-exporter-sa \
           --issuer https://dex.dex.svc.cluster.local:5556 \
           --connector-id kubernetes \
