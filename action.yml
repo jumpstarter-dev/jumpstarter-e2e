@@ -70,10 +70,21 @@ runs:
 
         export JUMPSTARTER_GRPC_INSECURE=1
 
-        jmp admin create client   test-client-oidc     --unsafe --out /dev/null --oidc-username dex:test-client-oidc
+        kubectl create -n default sa test-client-sa
+        kubectl create -n default sa test-exporter-sa
+
+        jmp admin create client   test-client-oidc     --unsafe --out /dev/null \
+          --oidc-username dex:test-client-oidc
+        jmp admin create client   test-client-sa       --unsafe --out /dev/null \
+          --oidc-username dex:CiJzeXN0ZW06c2VydmljZWFjY291bnQ6ZGVmYXVsdDp0ZXN0LWNsaWVudC1zYRIKa3ViZXJuZXRlcw==
         jmp admin create client   test-client-legacy   --unsafe --save
-        jmp admin create exporter test-exporter-oidc   --out /dev/null --oidc-username dex:test-exporter-oidc \
+
+        jmp admin create exporter test-exporter-oidc   --out /dev/null \
+          --oidc-username dex:test-exporter-oidc \
           --label example.com/board oidc
+        jmp admin create exporter test-exporter-sa     --out /dev/null \
+          --oidc-username dex:CiJzeXN0ZW06c2VydmljZWFjY291bnQ6ZGVmYXVsdDp0ZXN0LWV4cG9ydGVyLXNhEgprdWJlcm5ldGVz \
+          --label example.com/board sa
         jmp admin create exporter test-exporter-legacy --save \
           --label example.com/board legacy
 
