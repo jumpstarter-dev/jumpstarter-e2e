@@ -116,18 +116,26 @@ runs:
         go run github.com/mikefarah/yq/v4@latest -i ". * load(\"$GITHUB_ACTION_PATH/exporter.yaml\")" \
           /etc/jumpstarter/exporters/test-exporter-oidc.yaml
         go run github.com/mikefarah/yq/v4@latest -i ". * load(\"$GITHUB_ACTION_PATH/exporter.yaml\")" \
+          /etc/jumpstarter/exporters/test-exporter-sa.yaml
+        go run github.com/mikefarah/yq/v4@latest -i ". * load(\"$GITHUB_ACTION_PATH/exporter.yaml\")" \
           /etc/jumpstarter/exporters/test-exporter-legacy.yaml
 
         jmp client   list-configs
         jmp exporter list-configs
 
         jmp exporter run test-exporter-oidc &
+        jmp exporter run test-exporter-sa &
         jmp exporter run test-exporter-legacy &
 
         kubectl -n default wait --for=condition=Registered exporters.jumpstarter.dev/test-exporter-oidc
+        kubectl -n default wait --for=condition=Registered exporters.jumpstarter.dev/test-exporter-sa
         kubectl -n default wait --for=condition=Registered exporters.jumpstarter.dev/test-exporter-legacy
 
         jmp client shell test-client-oidc --label example.com/board oidc <<EOF
+        j power on
+        EOF
+
+        jmp client shell test-client-sa --label example.com/board sa <<EOF
         j power on
         EOF
 
