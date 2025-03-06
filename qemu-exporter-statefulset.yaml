@@ -32,7 +32,7 @@ spec:
             - /bin/bash
             - -c
             - |
-              echo <<EOF > /etc/pki/ca-trust/source/anchors/minica.pem
+              cat <<EOF > /tmp/minica.pem
               -----BEGIN CERTIFICATE-----
               MIIB/DCCAYKgAwIBAgIIcpC2uS+SjEIwCgYIKoZIzj0EAwMwIDEeMBwGA1UEAxMV
               bWluaWNhIHJvb3QgY2EgNzI5MGI2MCAXDTI1MDIwMzE5MzMyNVoYDzIxMjUwMjAz
@@ -48,7 +48,7 @@ spec:
               -----END CERTIFICATE-----
               EOF
 
-              update-ca-trust
+              trust anchor --store /tmp/minica.pem
 
               jmp exporter login default \
                 --endpoint jumpstarter-grpc.jumpstarter-lab.svc.cluster.local:8082 \
