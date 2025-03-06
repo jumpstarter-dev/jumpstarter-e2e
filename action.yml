@@ -71,3 +71,10 @@ runs:
         for i in $(seq 0 2); do
           kubectl -n default wait --for=condition=Registered "exporters.jumpstarter.dev/qemu-exporter-${i}"
         done
+
+        jmp admin create client test-client --unsafe --save
+
+        jmp client shell test-client <<EOF
+        j qemu power on
+        j qemu power off
+        EOF
