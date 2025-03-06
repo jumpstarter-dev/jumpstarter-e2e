@@ -58,6 +58,8 @@ runs:
       run: |
         . .venv/bin/activate
 
+        export JUMPSTARTER_GRPC_INSECURE=1
+
         ENDPOINT=$(helm get values jumpstarter --output json | jq -r '."jumpstarter-controller".grpc.endpoint')
 
         for i in $(seq 0 2); do
