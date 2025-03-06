@@ -33,6 +33,9 @@ config:
       config:
         issuer: "https://kubernetes.default.svc.cluster.local"
         insecureSkipVerify: true
+        userNameKey: sub
+        scopes:
+          - profile
 volumes:
   - name: tls
     secret:
