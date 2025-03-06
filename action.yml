@@ -33,6 +33,10 @@ runs:
         cp "$GITHUB_ACTION_PATH"/values.kind.yaml ./controller/deploy/helm/jumpstarter/values.kind.yaml
         cp "$GITHUB_ACTION_PATH"/kind_cluster.yaml ./controller/hack/kind_cluster.yaml
         make -C controller deploy
+        # important!
+        kubectl create clusterrolebinding oidc-reviewer  \
+         --clusterrole=system:service-account-issuer-discovery \
+         --group=system:unauthenticated
     - name: Deploy dex
       shell: bash
       run: |
