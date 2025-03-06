@@ -75,6 +75,8 @@ runs:
             "exporters.jumpstarter.dev/qemu-exporter-${i}"
         done
 
+        kubectl -n default logs pods/qemu-exporter-0 -f
+
         jmp admin create client test-client --unsafe --save
 
         jmp client shell test-client <<EOF
