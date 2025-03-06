@@ -63,6 +63,6 @@ spec:
                   type: jumpstarter_driver_qemu.driver.Qemu
               EOF
 
-              yq -i ". * load(\"/etc/exporter.yaml\")" /etc/jumpstarter/exporters/default.yaml
+              yq -i ". * load(\"/tmp/exporter.yaml\")" /etc/jumpstarter/exporters/default.yaml
 
               jmp exporter run default
