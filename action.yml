@@ -58,12 +58,15 @@ runs:
       run: |
         . .venv/bin/activate
 
+        ENDPOINT=$(helm get values jumpstarter --output json | jq -r '."jumpstarter-controller".grpc.endpoint')
+
         for i in $(seq 0 2); do
           jmp admin create exporter "qemu-exporter-${i}" --out /dev/null \
             --oidc-username dex:system:serviceaccount:default:qemu-exporter
         done
 
-        kubectl -n default apply -f "$GITHUB_ACTION_PATH"/qemu-exporter-statefulset.yaml
+        sed -i "s|%ENDPOINT%|$ENDPOINT|" "$GITHUB_ACTION_PATH"/qemu-exporter-statefulset.yaml
+        kubectl -n default apply      -f "$GITHUB_ACTION_PATH"/qemu-exporter-statefulset.yaml
 
         sleep 10
 
