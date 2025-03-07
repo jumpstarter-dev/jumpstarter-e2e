@@ -1,0 +1,68 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: qemu-exporter
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: qemu-exporter
+spec:
+  serviceName: qemu-exporter
+  replicas: 3
+  selector:
+    matchLabels:
+      exporter-mock: qemu
+  template:
+    metadata:
+      labels:
+        exporter-mock: qemu
+    spec:
+      serviceAccountName: qemu-exporter
+      restartPolicy: Always
+      containers:
+        - name: jumpstarter-exporter
+          image: quay.io/ncao/jumpstarter:summit
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: JUMPSTARTER_GRPC_INSECURE
+              value: "1"
+          command:
+            - /bin/bash
+            - -c
+            - |
+              cat <<EOF > /tmp/minica.pem
+              -----BEGIN CERTIFICATE-----
+              MIIB/DCCAYKgAwIBAgIIcpC2uS+SjEIwCgYIKoZIzj0EAwMwIDEeMBwGA1UEAxMV
+              bWluaWNhIHJvb3QgY2EgNzI5MGI2MCAXDTI1MDIwMzE5MzMyNVoYDzIxMjUwMjAz
+              MTkzMzI1WjAgMR4wHAYDVQQDExVtaW5pY2Egcm9vdCBjYSA3MjkwYjYwdjAQBgcq
+              hkjOPQIBBgUrgQQAIgNiAAQzezKJ4My35HPeoJvvzTjhS2uJMBYrYfrs5csxZjiy
+              q8ORrHM539XhWlA6sVZODhzcF2KL4mC9xKz/yIrsws+LKsIWNHGGmIPEKFYnHBGw
+              VBGeARvhpzZP/9frJXAN/8ejgYYwgYMwDgYDVR0PAQH/BAQDAgKEMB0GA1UdJQQW
+              MBQGCCsGAQUFBwMBBggrBgEFBQcDAjASBgNVHRMBAf8ECDAGAQH/AgEAMB0GA1Ud
+              DgQWBBSZRBCUuP3ta2xsfjnWIjvgvz4fojAfBgNVHSMEGDAWgBSZRBCUuP3ta2xs
+              fjnWIjvgvz4fojAKBggqhkjOPQQDAwNoADBlAjADql5Ks5wh181iUa1ZBnx4XOVe
+              l0l7I+mwlwJSPmkZHxruWZTx7gQU4tfDCr+UuzUCMQC2aDXRb17cphipK4gzbExv
+              EDLExjhHAqMPrKDmT0jHIi7Bbos38/1tyZ/IoKjLnv0=
+              -----END CERTIFICATE-----
+              EOF
+
+              trust anchor --store /tmp/minica.pem
+
+              jmp exporter login default \
+                --endpoint %ENDPOINT% \
+                --namespace default --name $(cat /etc/hostname) \
+                --issuer https://dex.dex.svc.cluster.local:5556 \
+                --connector-id kubernetes \
+                --token $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+
+              cat <<EOF > /tmp/exporter.yaml
+              export:
+                qemu:
+                  type: jumpstarter_driver_qemu.driver.Qemu
+              EOF
+
+              yq -i ". * load(\"/tmp/exporter.yaml\")" /etc/jumpstarter/exporters/default.yaml
+
+              jmp exporter run default
