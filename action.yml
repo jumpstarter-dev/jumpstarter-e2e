@@ -58,6 +58,13 @@ runs:
 
         helm repo add dex https://charts.dexidp.io
         helm install --namespace dex --wait -f "$GITHUB_ACTION_PATH"/dex.values.yaml dex dex/dex
+
+        sudo cp pki/ca.crt /usr/local/share/ca-certificates/dex.crt
+        sudo update-ca-certificates
+
+        echo "127.0.0.1 dex.dex.svc.cluster.local" | sudo tee -a /etc/hosts
+
+        curl -vvv https://dex.dex.svc.cluster.local:5556
     - name: Deploy jumpstarter controller
       shell: bash
       run: |
@@ -75,11 +82,6 @@ runs:
     - name: Run jumpstarter
       shell: bash
       run: |
-        sudo cp pki/ca.crt /usr/local/share/ca-certificates/dex.crt
-        sudo update-ca-certificates
-
-        echo "127.0.0.1 dex.dex.svc.cluster.local" | sudo tee -a /etc/hosts
-
         ENDPOINT=$(helm get values jumpstarter --output json | jq -r '."jumpstarter-controller".grpc.endpoint')
 
         sudo mkdir -p /etc/jumpstarter/exporters
