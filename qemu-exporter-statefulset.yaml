@@ -1,0 +1,48 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: qemu-exporter
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: qemu-exporter
+spec:
+  serviceName: qemu-exporter
+  replicas: 3
+  selector:
+    matchLabels:
+      exporter-mock: qemu
+  template:
+    metadata:
+      labels:
+        exporter-mock: qemu
+    spec:
+      serviceAccountName: qemu-exporter
+      restartPolicy: Always
+      containers:
+        - name: jumpstarter-exporter
+          image: quay.io/ncao/jumpstarter:summit
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: JUMPSTARTER_GRPC_INSECURE
+              value: "1"
+          command:
+            - /bin/bash
+            - -c
+            - |
+              openssl s_client -showcerts dex.dex.svc.cluster.local:5556 </dev/null >> /etc/ssl/cert.pem
+              jmp login --exporter default \
+                --endpoint %ENDPOINT% \
+                --namespace default --name $(cat /etc/hostname) \
+                --issuer https://dex.dex.svc.cluster.local:5556 \
+                --connector-id kubernetes \
+                --token $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+              cat <<EOF > /tmp/exporter.yaml
+              export:
+                power:
+                  type: jumpstarter_driver_power.driver.MockPower
+              EOF
+              yq -i ". * load(\"/tmp/exporter.yaml\")" /etc/jumpstarter/exporters/default.yaml
+              jmp run --exporter default
