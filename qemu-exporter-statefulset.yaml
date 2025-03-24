@@ -32,7 +32,8 @@ spec:
             - /bin/bash
             - -c
             - |
-              openssl s_client -showcerts dex.dex.svc.cluster.local:5556 </dev/null >> /etc/ssl/cert.pem
+              openssl s_client -showcerts dex.dex.svc.cluster.local:5556 </dev/null | \
+                openssl x509 -outform pem >> /etc/ssl/cert.pem
               jmp login --exporter default \
                 --endpoint %ENDPOINT% \
                 --namespace default --name $(cat /etc/hostname) \
