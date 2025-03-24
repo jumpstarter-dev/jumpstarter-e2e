@@ -91,6 +91,8 @@ runs:
             --oidc-username dex:system:serviceaccount:default:qemu-exporter
         done
 
+        kubectl -n default create configmap ca --from-file=cert.pem=ca.pem
+
         sed -i "s|%ENDPOINT%|$ENDPOINT|" "$GITHUB_ACTION_PATH"/qemu-exporter-statefulset.yaml
         kubectl -n default apply      -f "$GITHUB_ACTION_PATH"/qemu-exporter-statefulset.yaml
     - uses: mxschmitt/action-tmate@v3
