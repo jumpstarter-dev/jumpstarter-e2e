@@ -96,7 +96,4 @@ runs:
         sed -i "s|%ENDPOINT%|$ENDPOINT|" "$GITHUB_ACTION_PATH"/qemu-exporter-statefulset.yaml
         kubectl -n default apply      -f "$GITHUB_ACTION_PATH"/qemu-exporter-statefulset.yaml
 
-        for i in $(seq 0 2); do
-          kubectl -n default wait --for=condition=Registered --timeout=60s \
-            "exporters.jumpstarter.dev/qemu-exporter-${i}"
-        done
+        kubectl -n default rollout status --watch statefulset qemu-exporter --timeout 600s
