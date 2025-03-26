@@ -48,8 +48,8 @@ spec:
                 --token $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
               cat <<EOF > /tmp/exporter.yaml
               export:
-                power:
-                  type: jumpstarter_driver_power.driver.MockPower
+                qemu:
+                  type: jumpstarter_driver_qemu.driver.Qemu
               EOF
               yq -i ". * load(\"/tmp/exporter.yaml\")" /etc/jumpstarter/exporters/default.yaml
               jmp run --exporter default
