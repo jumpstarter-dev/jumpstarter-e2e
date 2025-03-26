@@ -30,7 +30,6 @@ runs:
     - name: Deploy dex
       shell: bash
       run: |
-        cp "$GITHUB_ACTION_PATH"/kind_cluster.yaml ./controller/hack/kind_cluster.yaml
         make -C controller cluster
 
         # important!
