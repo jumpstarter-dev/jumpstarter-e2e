@@ -96,6 +96,8 @@ spec:
               metadata:
                 namespace: $(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)
                 name: $(cat /etc/hostname)
+                labels:
+                  jumpstarter.dev/board: qemu
               endpoint: $(cat /shared/endpoint)
               token: $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
               export:
