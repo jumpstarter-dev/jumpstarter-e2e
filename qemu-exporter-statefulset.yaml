@@ -1,15 +1,36 @@
----
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: qemu-exporter
 data:
-  endpoint: %ENDPOINT%
+  endpoint: "%ENDPOINT%"
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: qemu-exporter
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: qemu-exporter-role
+rules:
+  - apiGroups: ["jumpstarter.dev"]
+    resources: ["exporters"]
+    verbs: ["*"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: qemu-exporter-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: qemu-exporter-role
+subjects:
+  - kind: ServiceAccount
+    name: qemu-exporter
+    namespace: default
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -28,6 +49,24 @@ spec:
     spec:
       serviceAccountName: qemu-exporter
       restartPolicy: Always
+      initContainers:
+        - name: jumpstarter-init
+          image: quay.io/jumpstarter-dev/jumpstarter-utils:latest
+          command:
+            - /bin/bash
+            - -c
+            - |
+              set -euxo pipefail
+
+              kubectl apply -f - << EOF
+              apiVersion: jumpstarter.dev/v1alpha1
+              kind: Exporter
+              metadata:
+                namespace: $(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)
+                name: $(cat /etc/hostname)
+              spec:
+                username: $(kubectl auth whoami -o go-template="{{.status.userInfo.username}}")
+              EOF
       containers:
         - name: jumpstarter-exporter
           image: quay.io/ncao/jumpstarter:summit
@@ -46,6 +85,7 @@ spec:
             - |
               set -euxo pipefail
 
+              sleep inf
               cat <<EOF > qemu.yaml
               apiVersion: jumpstarter.dev/v1alpha1
               kind: ExporterConfig
