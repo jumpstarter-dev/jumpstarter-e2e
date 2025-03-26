@@ -1,5 +1,12 @@
 ---
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: qemu-exporter
+data:
+  endpoint: %ENDPOINT%
+---
+apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: qemu-exporter
@@ -21,10 +28,6 @@ spec:
     spec:
       serviceAccountName: qemu-exporter
       restartPolicy: Always
-      volumes:
-        - name: ca
-          configMap:
-            name: ca
       containers:
         - name: jumpstarter-exporter
           image: quay.io/ncao/jumpstarter:summit
@@ -32,24 +35,28 @@ spec:
           env:
             - name: JUMPSTARTER_GRPC_INSECURE
               value: "1"
-          volumeMounts:
-            - name: ca
-              mountPath: /tmp/ca
+            - name: JUMPSTARTER_ENDPOINT
+              valueFrom:
+                configMapKeyRef:
+                  name: qemu-exporter
+                  key: endpoint
           command:
             - /bin/bash
             - -c
             - |
-              trust anchor /tmp/ca/cert.pem
-              jmp login --exporter default \
-                --endpoint %ENDPOINT% \
-                --namespace default --name $(cat /etc/hostname) \
-                --issuer https://dex.dex.svc.cluster.local:5556 \
-                --connector-id kubernetes \
-                --token $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
-              cat <<EOF > /tmp/exporter.yaml
+              set -euxo pipefail
+
+              cat <<EOF > qemu.yaml
+              apiVersion: jumpstarter.dev/v1alpha1
+              kind: ExporterConfig
+              metadata:
+                namespace: default
+                name: $(cat /etc/hostname)
+              endpoint: ${JUMPSTARTER_ENDPOINT}
+              token: $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
               export:
                 qemu:
                   type: jumpstarter_driver_qemu.driver.Qemu
               EOF
-              yq -i ". * load(\"/tmp/exporter.yaml\")" /etc/jumpstarter/exporters/default.yaml
-              jmp run --exporter default
+
+              jmp run --exporter-config qemu.yaml

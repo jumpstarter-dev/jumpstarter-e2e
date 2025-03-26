@@ -15,5 +15,5 @@ jobs:
           path: e2e
       - uses: ./e2e
         with:
-          controller-ref: main
+          controller-ref: oidc-ca
           jumpstarter-ref: main

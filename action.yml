@@ -30,36 +30,13 @@ runs:
     - name: Deploy dex
       shell: bash
       run: |
-        go run github.com/cloudflare/cfssl/cmd/cfssl@latest gencert -initca "$GITHUB_ACTION_PATH"/ca-csr.json | \
-          go run github.com/cloudflare/cfssl/cmd/cfssljson@latest -bare ca -
-        go run github.com/cloudflare/cfssl/cmd/cfssl@latest gencert -ca=ca.pem -ca-key=ca-key.pem \
-          -config="$GITHUB_ACTION_PATH"/ca-config.json -profile=www "$GITHUB_ACTION_PATH"/dex-csr.json | \
-          go run github.com/cloudflare/cfssl/cmd/cfssljson@latest -bare server
-
         cp "$GITHUB_ACTION_PATH"/kind_cluster.yaml ./controller/hack/kind_cluster.yaml
         make -C controller cluster
-
-        kubectl create namespace dex
-        kubectl -n dex create secret tls dex-tls \
-          --cert=server.pem \
-          --key=server-key.pem
-
-        go run github.com/mikefarah/yq/v4@latest -i \
-          '.jumpstarter-controller.config.authentication.jwt[0].issuer.certificateAuthority = load_str("ca.pem")' \
-          "$GITHUB_ACTION_PATH"/values.kind.yaml
 
         # important!
         kubectl create clusterrolebinding oidc-reviewer  \
          --clusterrole=system:service-account-issuer-discovery \
          --group=system:unauthenticated
-
-        helm repo add dex https://charts.dexidp.io
-        helm install --namespace dex --wait -f "$GITHUB_ACTION_PATH"/dex.values.yaml dex dex/dex
-
-        sudo cp ca.pem /usr/local/share/ca-certificates/dex.crt
-        sudo update-ca-certificates
-
-        echo "127.0.0.1 dex.dex.svc.cluster.local" | sudo tee -a /etc/hosts
     - name: Deploy jumpstarter controller
       shell: bash
       run: |
@@ -90,8 +67,6 @@ runs:
           jmp admin create exporter "qemu-exporter-${i}" --out /dev/null \
             --oidc-username dex:system:serviceaccount:default:qemu-exporter
         done
-
-        kubectl -n default create configmap ca --from-file=cert.pem=ca.pem
 
         sed -i "s|%ENDPOINT%|$ENDPOINT|" "$GITHUB_ACTION_PATH"/qemu-exporter-statefulset.yaml
         kubectl -n default apply      -f "$GITHUB_ACTION_PATH"/qemu-exporter-statefulset.yaml
