@@ -1,10 +1,4 @@
-global:
-  baseDomain: jumpstarter.127.0.0.1.nip.io
-  metrics:
-    enabled: false
 jumpstarter-controller:
-  grpc:
-    mode: "ingress"
   config:
     authentication:
       jwt:
@@ -14,3 +8,7 @@ jumpstarter-controller:
               - https://kubernetes.default.svc.cluster.local
             audienceMatchPolicy: MatchAny
             certificateAuthority: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+          claimMappings:
+            username:
+              claim: "sub"
+              prefix: "kubernetes:"
