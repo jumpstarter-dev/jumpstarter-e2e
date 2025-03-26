@@ -69,8 +69,8 @@ spec:
 
               while [ -z "$ENDPOINT" ]
               do
-                ENDPOINT=kubectl get -n $(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace) \
-                  exporters.jumpstarter.dev $(cat /etc/hostname) -o jsonpath="{.status.endpoint}"
+                ENDPOINT=$(kubectl get -n $(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace) \
+                  exporters.jumpstarter.dev $(cat /etc/hostname) -o jsonpath="{.status.endpoint}")
                 sleep 1s
               done
               echo "$ENDPOINT" > /shared/endpoint
