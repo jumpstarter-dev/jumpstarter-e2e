@@ -53,9 +53,6 @@ runs:
     - name: Run jumpstarter
       shell: bash
       run: |
-        ENDPOINT=$(helm get values jumpstarter --output json | jq -r '."jumpstarter-controller".grpc.endpoint')
-
-        sed -i "s|%ENDPOINT%|$ENDPOINT|" "$GITHUB_ACTION_PATH"/qemu-exporter-statefulset.yaml
         kubectl -n default apply      -f "$GITHUB_ACTION_PATH"/qemu-exporter-statefulset.yaml
 
         kubectl -n default rollout status --watch statefulset qemu-exporter --timeout 600s
