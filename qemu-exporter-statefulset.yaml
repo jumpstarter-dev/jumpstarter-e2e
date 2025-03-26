@@ -64,7 +64,7 @@ spec:
                 namespace: $(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)
                 name: $(cat /etc/hostname)
                 labels:
-                  jumpstarter.dev/board: qemu
+                  example.com/board: qemu
               spec:
                 username: kubernetes:$(kubectl auth whoami -o jsonpath="{.status.userInfo.username}")
               EOF
