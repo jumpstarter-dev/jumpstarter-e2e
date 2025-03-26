@@ -55,18 +55,6 @@ runs:
       run: |
         ENDPOINT=$(helm get values jumpstarter --output json | jq -r '."jumpstarter-controller".grpc.endpoint')
 
-        sudo mkdir -p /etc/jumpstarter/exporters
-        sudo chown $USER /etc/jumpstarter/exporters
-
-        . .venv/bin/activate
-
-        export JUMPSTARTER_GRPC_INSECURE=1
-
-        for i in $(seq 0 2); do
-          jmp admin create exporter "qemu-exporter-${i}" --out /dev/null \
-            --oidc-username dex:system:serviceaccount:default:qemu-exporter
-        done
-
         sed -i "s|%ENDPOINT%|$ENDPOINT|" "$GITHUB_ACTION_PATH"/qemu-exporter-statefulset.yaml
         kubectl -n default apply      -f "$GITHUB_ACTION_PATH"/qemu-exporter-statefulset.yaml
 

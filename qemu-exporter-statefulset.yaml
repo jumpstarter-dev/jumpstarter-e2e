@@ -3,7 +3,7 @@ kind: ConfigMap
 metadata:
   name: qemu-exporter
 data:
-  endpoint: "grpc.jumpstarter.10.239.133.131.nip.io:8082"
+  endpoint: "%ENDPOINT%"
 ---
 apiVersion: v1
 kind: ServiceAccount
