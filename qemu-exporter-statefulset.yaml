@@ -89,7 +89,7 @@ spec:
               apiVersion: jumpstarter.dev/v1alpha1
               kind: ExporterConfig
               metadata:
-                namespace: default
+                namespace: $(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)
                 name: $(cat /etc/hostname)
               endpoint: ${JUMPSTARTER_ENDPOINT}
               token: $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
