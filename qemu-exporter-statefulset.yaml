@@ -23,7 +23,7 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: qemu-exporter
-    namespace: default
+    namespace: default # FIXME: make namespace configurable
 ---
 apiVersion: apps/v1
 kind: StatefulSet
