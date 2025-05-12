@@ -8,6 +8,7 @@ jobs:
         os:
           - ubuntu-24.04
           - ubuntu-24.04-arm
+          - macos-13 # arm-based macOS runners does not support nested virt
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4

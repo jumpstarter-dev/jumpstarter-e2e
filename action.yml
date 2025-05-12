@@ -15,11 +15,17 @@ runs:
       shell: bash
       run: |
         uv python install 3.12
-    - name: Install bats
+    - name: Install bats (Linux)
       shell: bash
+      if: runner.os == 'Linux'
       run: |
         sudo apt-get update
         sudo apt-get install -y bats bats-support bats-assert
+    - name: Install bats (macOS)
+      shell: bash
+      if: runner.os == 'macOS'
+      run: |
+        brew install bats-core bat-extras
     - name: Checkout jumpstarter controller
       uses: actions/checkout@v4
       with:
@@ -32,6 +38,12 @@ runs:
         repository: jumpstarter-dev/jumpstarter
         ref: ${{ inputs.jumpstarter-ref }}
         path: jumpstarter
+    - name: Install Docker and Kind (macOS)
+      if: runner.os == 'macOS'
+      shell: bash
+      run: |
+        brew install colima docker kind go kubectl helm gnu-sed
+        colima start --network-address --cpu 4 --memory 8 --mount-type virtiofs
     - name: Deploy dex
       shell: bash
       run: |
@@ -59,12 +71,20 @@ runs:
          --group=system:unauthenticated
 
         helm repo add dex https://charts.dexidp.io
-        helm install --namespace dex --wait -f "$GITHUB_ACTION_PATH"/dex.values.yaml dex dex/dex
+        helm install --namespace dex --wait --timeout 20m -f "$GITHUB_ACTION_PATH"/dex.values.yaml dex dex/dex
 
-        sudo cp ca.pem /usr/local/share/ca-certificates/dex.crt
-        sudo update-ca-certificates
+        if [[ "$(uname)" == "Darwin" ]]; then
+          echo "192.168.65.2 dex.dex.svc.cluster.local" | sudo tee -a /etc/hosts
+          gsed -i 's|$("${SCRIPT_DIR}"/get_ext_ip.sh)|192.168.65.2|' ./controller/hack/deploy_with_helm.sh
+          gsed -i 's|RETRIES=60|RETRIES=600|' ./controller/hack/deploy_with_helm.sh
 
-        echo "127.0.0.1 dex.dex.svc.cluster.local" | sudo tee -a /etc/hosts
+          sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain ca.pem
+        else
+          echo "127.0.0.1 dex.dex.svc.cluster.local" | sudo tee -a /etc/hosts
+
+          sudo cp ca.pem /usr/local/share/ca-certificates/dex.crt
+          sudo update-ca-certificates
+        fi
     - name: Deploy jumpstarter controller
       shell: bash
       run: |
@@ -90,6 +110,7 @@ runs:
         . .venv/bin/activate
 
         export JUMPSTARTER_GRPC_INSECURE=1
+        export JUMPSTARTER_FORCE_SYSTEM_CERTS=1
 
         kubectl create -n default sa test-client-sa
         kubectl create -n default sa test-exporter-sa
