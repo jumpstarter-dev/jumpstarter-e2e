@@ -1,11 +1,4 @@
-global:
-  baseDomain: jumpstarter.127.0.0.1.nip.io
-  metrics:
-    enabled: false
-
 jumpstarter-controller:
-  grpc:
-    mode: "ingress"
   config:
     provisioning:
       enabled: true
