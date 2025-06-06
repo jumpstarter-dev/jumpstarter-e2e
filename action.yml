@@ -41,9 +41,6 @@ runs:
           -config="$GITHUB_ACTION_PATH"/ca-config.json -profile=www "$GITHUB_ACTION_PATH"/dex-csr.json | \
           go run github.com/cloudflare/cfssl/cmd/cfssljson@latest -bare server
 
-        go run github.com/mikefarah/yq/v4@latest -i \
-          '.nodes[0].extraPortMappings += { "containerPort": 32000, "hostPort": 5556, "protocol": "TCP" }' \
-          ./controller/hack/kind_cluster.yaml
         make -C controller cluster
 
         kubectl create namespace dex
@@ -52,12 +49,8 @@ runs:
           --key=server-key.pem
 
         go run github.com/mikefarah/yq/v4@latest -i \
-          ". *= load(\"$GITHUB_ACTION_PATH/values.kind.yaml\")" \
-          ./controller/deploy/helm/jumpstarter/values.kind.yaml
-
-        go run github.com/mikefarah/yq/v4@latest -i \
           '.jumpstarter-controller.config.authentication.jwt[0].issuer.certificateAuthority = load_str("ca.pem")' \
-          ./controller/deploy/helm/jumpstarter/values.kind.yaml
+          "$GITHUB_ACTION_PATH/values.yaml"
 
         # important!
         kubectl create clusterrolebinding oidc-reviewer  \
@@ -74,7 +67,7 @@ runs:
     - name: Deploy jumpstarter controller
       shell: bash
       run: |
-        make -C controller deploy
+        make -C controller deploy HELM_SETS="-f $GITHUB_ACTION_PATH/values.yaml"
     - name: Install jumpstarter
       shell: bash
       run: |
