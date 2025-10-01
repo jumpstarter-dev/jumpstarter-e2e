@@ -116,10 +116,16 @@ EOF
 
   jmp config client use test-client-oidc
 
-  jmp create lease     --selector example.com/board=oidc --duration 1d
-  jmp get    leases
-  jmp get    exporters
-  jmp delete leases    --all
+  run jmp create lease     --selector example.com/board=oidc --duration 1d
+  lease_name="$output"
+  run jmp get    leases
+  [ "$output" = *"$lease_name"* ]
+  run jmp get    leases    --selector example.com/board=oidc
+  [ "$output" = *"$lease_name"* ]
+  run jmp get    leases    --selector example.com/board=foo
+  [ ! "$output" = *"$lease_name"* ]
+  jmp get        exporters
+  jmp delete     leases    --all
 }
 
 @test "can lease and connect to exporters" {
