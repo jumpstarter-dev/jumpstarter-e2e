@@ -1,0 +1,11 @@
+export:
+  power:
+    type: jumpstarter_driver_power.driver.MockPower
+
+hooks:
+  beforeLease:
+    script: |
+      echo "HOOK: Failing to test exit"
+      exit 1
+    timeout: 10
+    onFailure: exit

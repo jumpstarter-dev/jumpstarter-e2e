@@ -1,0 +1,31 @@
+apiVersion: jumpstarter.dev/v1alpha1
+kind: Exporter
+metadata:
+  name: test-exporter-hooks
+  namespace: jumpstarter-lab
+spec:
+  export:
+    power:
+      type: jumpstarter_driver_power.driver.MockPower
+    storage:
+      type: jumpstarter_driver_opendal.driver.MockStorageMux
+  hooks:
+    beforeLease:
+      script: |
+        echo "HOOK: beforeLease starting"
+        echo "LEASE_NAME=$LEASE_NAME"
+        echo "CLIENT_NAME=$CLIENT_NAME"
+        echo "JUMPSTARTER_HOST=$JUMPSTARTER_HOST"
+        echo "Testing driver interaction..."
+        j power on && echo "Power turned on successfully"
+        echo "HOOK: beforeLease completed"
+      timeout: 60
+      onFailure: warn
+    afterLease:
+      script: |
+        echo "HOOK: afterLease starting"
+        echo "Testing driver interaction..."
+        j power off && echo "Power turned off successfully"
+        echo "HOOK: afterLease completed"
+      timeout: 60
+      onFailure: warn
